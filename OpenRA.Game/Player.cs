@@ -201,14 +201,8 @@ namespace OpenRA
 			// Set this property before running any Created callbacks on the player actor
 			IsBot = BotType != null;
 
-			// Special case handling is required for the Player actor:
-			// Since Actor.Created would be called before PlayerActor is assigned here
-			// querying player traits in INotifyCreated.Created would crash.
-			// Therefore assign the uninitialized actor and run the Created callbacks
-			// by calling Initialize ourselves.
 			var playerActorType = world.Type == WorldType.Editor ? SystemActors.EditorPlayer : SystemActors.Player;
-			PlayerActor = new Actor(world, playerActorType.ToString(), new TypeDictionary { new OwnerInit(this) });
-			PlayerActor.Initialize(true);
+			PlayerActor = world.CreateActor(true, playerActorType.ToString(), new TypeDictionary { new OwnerInit(this) });
 
 			Shroud = PlayerActor.Trait<Shroud>();
 			FrozenActorLayer = PlayerActor.TraitOrDefault<FrozenActorLayer>();
