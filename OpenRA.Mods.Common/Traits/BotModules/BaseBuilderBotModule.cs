@@ -192,11 +192,37 @@ namespace OpenRA.Mods.Common.Traits
 
 		protected override void Created(Actor self)
 		{
-			playerPower = self.Owner.PlayerActor.TraitOrDefault<PowerManager>();
-			playerResources = self.Owner.PlayerActor.Trait<PlayerResources>();
-			resourceLayer = self.World.WorldActor.TraitOrDefault<IResourceLayer>();
-			pathFinder = self.World.WorldActor.TraitOrDefault<IPathFinder>();
-			positionsUpdatedModules = self.Owner.PlayerActor.TraitsImplementing<IBotPositionsUpdated>().ToArray();
+			Console.WriteLine($"Checking PlayerActor or Owner: PlayerActor = {self.Owner?.PlayerActor}, Owner = {self.Owner?.InternalName ?? "null"}");
+
+			if (self.Owner?.PlayerActor != null)
+			{
+				playerPower = self.Owner.PlayerActor.TraitOrDefault<PowerManager>();
+				playerResources = self.Owner.PlayerActor.Trait<PlayerResources>();
+				positionsUpdatedModules = self.Owner.PlayerActor.TraitsImplementing<IBotPositionsUpdated>().ToArray();
+			}
+			else
+			{
+				// Handle the case where PlayerActor or Owner is null
+				// You can log an error, throw an exception, or initialize defaults
+				Console.WriteLine("PlayerActor or Owner is null");
+			}
+
+			if (self.World?.WorldActor != null)
+			{
+				resourceLayer = self.World.WorldActor.TraitOrDefault<IResourceLayer>();
+				pathFinder = self.World.WorldActor.TraitOrDefault<IPathFinder>();
+			}
+			else
+			{
+				// Handle the case where WorldActor is null
+				Console.WriteLine("WorldActor is null");
+			}
+
+			//playerPower = self.Owner.PlayerActor.TraitOrDefault<PowerManager>();
+			//playerResources = self.Owner.PlayerActor.Trait<PlayerResources>();
+			//resourceLayer = self.World.WorldActor.TraitOrDefault<IResourceLayer>();
+			//pathFinder = self.World.WorldActor.TraitOrDefault<IPathFinder>();
+			//positionsUpdatedModules = self.Owner.PlayerActor.TraitsImplementing<IBotPositionsUpdated>().ToArray();
 
 			var i = 0;
 

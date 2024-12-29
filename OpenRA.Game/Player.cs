@@ -11,6 +11,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using Eluant;
 using Eluant.ObjectBinding;
@@ -201,14 +202,13 @@ namespace OpenRA
 			// Set this property before running any Created callbacks on the player actor
 			IsBot = BotType != null;
 
-			// Special case handling is required for the Player actor:
-			// Since Actor.Created would be called before PlayerActor is assigned here
-			// querying player traits in INotifyCreated.Created would crash.
-			// Therefore assign the uninitialized actor and run the Created callbacks
-			// by calling Initialize ourselves.
 			var playerActorType = world.Type == WorldType.Editor ? SystemActors.EditorPlayer : SystemActors.Player;
-			PlayerActor = new Actor(world, playerActorType.ToString(), new TypeDictionary { new OwnerInit(this) });
-			PlayerActor.Initialize(true);
+			Log.Write("debug", $"Player actor type: {playerActorType}");
+
+			Console.WriteLine("Attempting to assign PlayerActor");
+			PlayerActor = world.CreateActor(true, playerActorType.ToString(), new TypeDictionary { new OwnerInit(this) });
+			Log.Write("debug", $"PlayerActor created: {PlayerActor}");
+			Log.Write("debug", $"Owner assigned: {PlayerActor?.Owner}");
 
 			Shroud = PlayerActor.Trait<Shroud>();
 			FrozenActorLayer = PlayerActor.TraitOrDefault<FrozenActorLayer>();

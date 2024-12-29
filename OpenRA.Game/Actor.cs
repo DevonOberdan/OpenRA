@@ -123,15 +123,23 @@ namespace OpenRA
 		readonly IEnumerable<WPos> enabledTargetableWorldPositions;
 		bool created;
 
-		internal Actor(World world, string name, TypeDictionary initDict)
+		internal Actor(World world, string name, TypeDictionary initDict, bool addToWorld = true)
 		{
 			var duplicateInit = initDict.WithInterface<ISingleInstanceInit>().GroupBy(i => i.GetType())
 				.FirstOrDefault(i => i.Count() > 1);
 
 			if (duplicateInit != null)
+			{
+				Console.WriteLine("Duplicate initializer found: " + duplicateInit.Key.Name);
 				throw new InvalidDataException($"Duplicate initializer '{duplicateInit.Key.Name}'");
+			}
+			else
+			{
+				Console.WriteLine("No duplicate initializers found.");
+			}
 
 			var init = new ActorInitializer(this, initDict);
+			Console.WriteLine("ActorInitializer created.");
 
 			readOnlyConditionCache = new ReadOnlyDictionary<string, int>(conditionCache);
 
@@ -141,6 +149,17 @@ namespace OpenRA
 			if (ownerInit != null)
 				Owner = ownerInit.Value(world);
 
+
+			Console.WriteLine($"Owner assigned: {Owner?.InternalName ?? "null"}");
+
+
+			if (ownerInit != null)
+			{
+				Console.WriteLine("Owner initialized with name: " + ownerInit.InternalName);
+				Console.WriteLine("Owner assigned: " + (Owner != null ? Owner.ToString() : "null"));
+
+			}
+
 			if (name != null)
 			{
 				name = name.ToLowerInvariant();
@@ -148,6 +167,7 @@ namespace OpenRA
 				if (!world.Map.Rules.Actors.ContainsKey(name))
 					throw new NotImplementedException("No rules definition for unit " + name);
 
+				Console.WriteLine("Looking up actor info for: " + name);
 				Info = world.Map.Rules.Actors[name];
 
 				var resolveOrdersList = new List<IResolveOrder>();
@@ -166,6 +186,13 @@ namespace OpenRA
 				{
 					var trait = traitInfo.Create(init);
 					AddTrait(trait);
+
+					Console.WriteLine("Trait processed: " + trait.GetType().Name);
+
+					if (trait is OwnerInit ownerInitInstance)
+					{
+						Console.WriteLine("OwnerInit processed for: " + ownerInit.InternalName);
+					}
 
 					// PERF: Cache all these traits as soon as the actor is created. This is a fairly cheap one-off cost per
 					// actor that allows us to provide some fast implementations of commonly used methods that are relied on by
@@ -190,6 +217,10 @@ namespace OpenRA
 					{ if (trait is ICrushable t) crushablesList.Add(t); }
 				}
 
+				Console.WriteLine("Processed traits for actor: " + name);
+				Console.WriteLine("After processing traits, Owner: " + (Owner != null ? Owner.ToString() : "null"));
+
+
 				resolveOrders = resolveOrdersList.ToArray();
 				renderModifiers = renderModifiersList.ToArray();
 				renders = rendersList.ToArray();
@@ -204,10 +235,7 @@ namespace OpenRA
 				SyncHashes = syncHashesList.ToArray();
 				crushables = crushablesList.ToArray();
 			}
-		}
 
-		internal void Initialize(bool addToWorld = true)
-		{
 			created = true;
 
 			// Make sure traits are usable for condition notifiers

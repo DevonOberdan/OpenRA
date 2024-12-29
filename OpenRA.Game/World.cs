@@ -336,13 +336,20 @@ namespace OpenRA
 
 		public Actor CreateActor(bool addToWorld, string name, TypeDictionary initDict)
 		{
-			var a = new Actor(this, name, initDict);
-			a.Initialize(addToWorld);
-			return a;
+			if (string.IsNullOrEmpty(name))
+				throw new ArgumentNullException(nameof(name), "Actor name cannot be null or empty.");
+
+			if (initDict == null)
+				throw new ArgumentNullException(nameof(initDict), "Initialization dictionary cannot be null.");
+
+			return new Actor(this, name, initDict, addToWorld);
 		}
 
 		public void Add(Actor a)
 		{
+			if (a == null)
+				throw new ArgumentNullException(nameof(a), "Actor cannot be null.");
+
 			a.IsInWorld = true;
 			actors.Add(a.ActorID, a);
 			ActorAdded(a);
@@ -554,6 +561,10 @@ namespace OpenRA
 				pi.Outcome = player.WinState;
 				pi.OutcomeTimestampUtc = DateTime.UtcNow;
 			}
+			else
+			{
+				Console.WriteLine($"Player not found: {player}");
+			}
 		}
 
 		internal void OnClientDisconnected(int clientId)
@@ -610,7 +621,7 @@ namespace OpenRA
 
 			// Dispose newer actors first, and the world actor last
 			foreach (var a in actors.Values.Reverse())
-				a.Dispose();
+				a?.Dispose();
 
 			// Actor disposals are done in a FrameEndTask
 			while (frameEndActions.Count != 0)
@@ -620,9 +631,9 @@ namespace OpenRA
 			// problems with having multiple OMs active when joining a game lobby from the main menu.
 			// A matching check in Game.JoinInner handles OM disposal for all other cases.
 			if (Type == WorldType.Shellmap)
-				OrderManager.Dispose();
+				OrderManager?.Dispose();
 
-			Map.Dispose();
+			Map?.Dispose();
 
 			Game.FinishBenchmark();
 		}

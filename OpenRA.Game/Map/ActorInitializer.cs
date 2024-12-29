@@ -11,6 +11,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using OpenRA.Primitives;
@@ -231,15 +232,24 @@ namespace OpenRA
 		{
 			this.value = value;
 			InternalName = value.InternalName;
+			Console.WriteLine($"OwnerInit created with Player: {value.InternalName}");
+
 		}
 
 		public OwnerInit(string value)
 		{
 			InternalName = value;
+			Console.WriteLine($"OwnerInit created with Player: {InternalName}");
+
 		}
 
 		public Player Value(World world)
 		{
+			if (value == null)
+			{
+				Console.WriteLine($"Value is null, attempting to find player by InternalName: {InternalName}");
+			}
+
 			return value ?? world.Players.First(x => x.InternalName == InternalName);
 		}
 
