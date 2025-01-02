@@ -58,19 +58,10 @@ namespace OpenRA.Mods.Common.Widgets
 				yield return selected;
 		}
 
+		// TODO: Implement
 		public static IEnumerable<Actor> SelectActorsInBoxWithDeadzone(World world, int2 a, int2 b, Modifiers modifiers)
 		{
-			// For dragboxes that are too small, shrink the dragbox to a single point (point b)
-			if ((a - b).Length <= Game.Settings.Game.SelectionDeadzone)
-				a = b;
-
-			if (a == b)
-				return SelectHighestPriorityActorAtPoint(world, a, modifiers);
-
-			return world.ScreenMap.ActorsInMouseBox(a, b)
-				.Select(x => x.Actor)
-				.Where(x => x.Info.HasTraitInfo<ISelectableInfo>() && (x.Owner.IsAlliedWith(world.RenderPlayer) || !world.FogObscures(x)))
-				.SubsetWithHighestSelectionPriority(modifiers);
+			return new List<Actor>();
 		}
 
 		public static Player[] GetPlayersToIncludeInSelection(World world)

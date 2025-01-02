@@ -86,16 +86,5 @@ namespace OpenRA.Traits
 			var pixelDistance = (centerPixel - selectionPixel).Length;
 			return info.SelectionPriority(modifiers) - (long)pixelDistance << 16;
 		}
-
-		static readonly Actor[] NoActors = Array.Empty<Actor>();
-
-		public static IEnumerable<Actor> SubsetWithHighestSelectionPriority(this IEnumerable<Actor> actors, Modifiers modifiers)
-		{
-			return actors.GroupBy(x => x.SelectionPriority(modifiers))
-				.OrderByDescending(g => g.Key)
-				.Select(g => g.AsEnumerable())
-				.DefaultIfEmpty(NoActors)
-				.FirstOrDefault();
-		}
 	}
 }

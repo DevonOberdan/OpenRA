@@ -50,7 +50,7 @@ namespace OpenRA.Mods.Common.Widgets.Logic.Ingame
 			var eligiblePlayers = SelectionUtils.GetPlayersToIncludeInSelection(world);
 
 			// Select actors on the screen which belong to the current player(s)
-			var newSelection = SelectionUtils.SelectActorsOnScreen(world, worldRenderer, null, eligiblePlayers).SubsetWithHighestSelectionPriority(e.Modifiers).ToList();
+			var newSelection = SelectionUtils.SelectActorsOnScreen(world, worldRenderer, null, eligiblePlayers).ToList();
 
 			// Check if selecting actors on the screen has selected new units
 			if (newSelection.Count > selection.Actors.Count)
@@ -58,7 +58,7 @@ namespace OpenRA.Mods.Common.Widgets.Logic.Ingame
 			else
 			{
 				// Select actors in the world that have highest selection priority
-				newSelection = SelectionUtils.SelectActorsInWorld(world, null, eligiblePlayers).SubsetWithHighestSelectionPriority(e.Modifiers).ToList();
+				newSelection = SelectionUtils.SelectActorsInWorld(world, null, eligiblePlayers).ToList();
 				TextNotificationsManager.AddFeedbackLine(SelectedUnitsAcrossMap, "units", newSelection.Count);
 			}
 
