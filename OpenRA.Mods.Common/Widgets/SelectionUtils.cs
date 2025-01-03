@@ -48,15 +48,6 @@ namespace OpenRA.Mods.Common.Widgets
 			});
 		}
 
-		public static IEnumerable<Actor> SelectHighestPriorityActorAtPoint(World world, int2 a, Modifiers modifiers)
-		{
-			var selected = world.ScreenMap.ActorsAtMouse(a)
-				.Where(x => x.Actor.Info.HasTraitInfo<ISelectableInfo>() && (x.Actor.Owner.IsAlliedWith(world.RenderPlayer) || !world.FogObscures(x.Actor)))
-				.WithHighestSelectionPriority(a, modifiers);
-
-			if (selected != null)
-				yield return selected;
-		}
 
 		// TODO: Implement
 		public static IEnumerable<Actor> SelectActorsInBoxWithDeadzone(World world, int2 a, int2 b, Modifiers modifiers)
