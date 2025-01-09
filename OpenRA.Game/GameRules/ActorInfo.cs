@@ -33,7 +33,6 @@ namespace OpenRA
 		/// </summary>
 		public readonly string Name;
 		readonly TypeDictionary traits = new();
-		TraitInfo[] constructOrderCache = null;
 
 		public ActorInfo(ObjectCreator creator, string name, MiniYaml node)
 		{
@@ -101,71 +100,68 @@ namespace OpenRA
 			return info;
 		}
 
-		public IEnumerable<TraitInfo> TraitsInConstructOrder()
+		public IEnumerable<TraitInfo> GetAllTraitInfo()
 		{
-			if (constructOrderCache != null)
-				return constructOrderCache;
+			return traits.WithInterface<TraitInfo>();
 
-			constructOrderCache = traits.WithInterface<TraitInfo>().ToArray();
+			var source = traits.WithInterface<TraitInfo>().Select(i => new
+			{
+				Trait = i,
+				Type = i.GetType(),
+				Dependencies = PrerequisitesOf(i).ToList(),
+				OptionalDependencies = OptionalPrerequisitesOf(i).ToList()
+			}).ToList();
 
-			//			var source = traits.WithInterface<TraitInfo>().Select(i => new
-			//			{
-			//				Trait = i,
-			//				Type = i.GetType(),
-			//				Dependencies = PrerequisitesOf(i).ToList(),
-			//				OptionalDependencies = OptionalPrerequisitesOf(i).ToList()
-			//			}).ToList();
+			var resolved = source.Where(s => s.Dependencies.Count == 0 && s.OptionalDependencies.Count == 0).ToList();
+			var unresolved = source.ToHashSet();
+			unresolved.ExceptWith(resolved);
 
-			//			var resolved = source.Where(s => s.Dependencies.Count == 0 && s.OptionalDependencies.Count == 0).ToList();
-			//			var unresolved = source.ToHashSet();
-			//			unresolved.ExceptWith(resolved);
+			static bool AreResolvable(Type a, Type b) => a.IsAssignableFrom(b);
 
-			//			static bool AreResolvable(Type a, Type b) => a.IsAssignableFrom(b);
+			// This query detects which unresolved traits can be immediately resolved as all their direct dependencies are met.
+			var more = unresolved.Where(u =>
+				u.Dependencies.All(d => // To be resolvable, all dependencies must be satisfied according to the following conditions:
+					resolved.Exists(r => AreResolvable(d, r.Type)) && // There must exist a resolved trait that meets the dependency.
+					!unresolved.Any(u1 => AreResolvable(d, u1.Type))) && // All matching traits that meet this dependency must be resolved first.
+				u.OptionalDependencies.All(d => // To be resolvable, all optional dependencies must be satisfied according to the following condition:
+					!unresolved.Any(u1 => AreResolvable(d, u1.Type)))); // All matching traits that meet this optional dependencies must be resolved first.
 
-			//			// This query detects which unresolved traits can be immediately resolved as all their direct dependencies are met.
-			//			var more = unresolved.Where(u =>
-			//				u.Dependencies.All(d => // To be resolvable, all dependencies must be satisfied according to the following conditions:
-			//					resolved.Exists(r => AreResolvable(d, r.Type)) && // There must exist a resolved trait that meets the dependency.
-			//					!unresolved.Any(u1 => AreResolvable(d, u1.Type))) && // All matching traits that meet this dependency must be resolved first.
-			//				u.OptionalDependencies.All(d => // To be resolvable, all optional dependencies must be satisfied according to the following condition:
-			//					!unresolved.Any(u1 => AreResolvable(d, u1.Type)))); // All matching traits that meet this optional dependencies must be resolved first.
+			// Continue resolving traits as long as possible.
+			// Each time we resolve some traits, this means dependencies for other traits may then be possible to satisfy in the next pass.
+#pragma warning disable CA1851 // Possible multiple enumerations of 'IEnumerable' collection
+			var readyToResolve = more.ToList();
+			while (readyToResolve.Count != 0)
+			{
+				resolved.AddRange(readyToResolve);
+				unresolved.ExceptWith(readyToResolve);
+				readyToResolve.Clear();
+				readyToResolve.AddRange(more);
+			}
+#pragma warning restore CA1851
 
-			//			// Continue resolving traits as long as possible.
-			//			// Each time we resolve some traits, this means dependencies for other traits may then be possible to satisfy in the next pass.
-			//#pragma warning disable CA1851 // Possible multiple enumerations of 'IEnumerable' collection
-			//			var readyToResolve = more.ToList();
-			//			while (readyToResolve.Count != 0)
-			//			{
-			//				resolved.AddRange(readyToResolve);
-			//				unresolved.ExceptWith(readyToResolve);
-			//				readyToResolve.Clear();
-			//				readyToResolve.AddRange(more);
-			//			}
-			//#pragma warning restore CA1851
+			if (unresolved.Count != 0)
+			{
+				var exceptionString = "ActorInfo(\"" + Name + "\") failed to initialize because of the following:\n";
+				var missing = unresolved.SelectMany(u => u.Dependencies.Where(d => !source.Any(s => AreResolvable(d, s.Type)))).Distinct();
 
-			//			if (unresolved.Count != 0)
-			//			{
-			//				var exceptionString = "ActorInfo(\"" + Name + "\") failed to initialize because of the following:\n";
-			//				var missing = unresolved.SelectMany(u => u.Dependencies.Where(d => !source.Any(s => AreResolvable(d, s.Type)))).Distinct();
+				exceptionString += "Missing:\n";
+				foreach (var m in missing)
+					exceptionString += m + " \n";
 
-			//				exceptionString += "Missing:\n";
-			//				foreach (var m in missing)
-			//					exceptionString += m + " \n";
+				exceptionString += "Unresolved:\n";
+				foreach (var u in unresolved)
+				{
+					var deps = u.Dependencies.Where(d => !resolved.Exists(r => r.Type == d));
+					var optDeps = u.OptionalDependencies.Where(d => !resolved.Exists(r => r.Type == d));
+					var allDeps = string.Join(", ", deps.Select(o => o.ToString()).Concat(optDeps.Select(o => $"[{o}]")));
+					exceptionString += $"{u.Type}: {{ {allDeps} }}\n";
+				}
 
-			//				exceptionString += "Unresolved:\n";
-			//				foreach (var u in unresolved)
-			//				{
-			//					var deps = u.Dependencies.Where(d => !resolved.Exists(r => r.Type == d));
-			//					var optDeps = u.OptionalDependencies.Where(d => !resolved.Exists(r => r.Type == d));
-			//					var allDeps = string.Join(", ", deps.Select(o => o.ToString()).Concat(optDeps.Select(o => $"[{o}]")));
-			//					exceptionString += $"{u.Type}: {{ {allDeps} }}\n";
-			//				}
+				throw new YamlException(exceptionString);
+			}
 
-			//				throw new YamlException(exceptionString);
-			//			}
-
-			//			constructOrderCache = resolved.Select(r => r.Trait).ToArray();
-			return constructOrderCache;
+			//constructOrderCache = resolved.Select(r => r.Trait).ToArray();
+			//return constructOrderCache;
 		}
 
 		public static IEnumerable<Type> PrerequisitesOf(TraitInfo info)

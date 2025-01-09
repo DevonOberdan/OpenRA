@@ -43,7 +43,7 @@ namespace OpenRA.Test
 		{
 			var unorderedTraits = new TraitInfo[] { new MockBInfo(), new MockCInfo(), new MockAInfo(), new MockBInfo() };
 			var actorInfo = new ActorInfo("test", unorderedTraits);
-			var orderedTraits = actorInfo.TraitsInConstructOrder().ToArray();
+			var orderedTraits = actorInfo.GetAllTraitInfo().ToArray();
 
 			CollectionAssert.AreEquivalent(unorderedTraits, orderedTraits);
 
@@ -62,7 +62,7 @@ namespace OpenRA.Test
 		{
 			var unorderedTraits = new TraitInfo[] { new MockHInfo(), new MockIInfo(), new MockGInfo(), new MockHInfo() };
 			var actorInfo = new ActorInfo("test", unorderedTraits);
-			var orderedTraits = actorInfo.TraitsInConstructOrder().ToArray();
+			var orderedTraits = actorInfo.GetAllTraitInfo().ToArray();
 
 			CollectionAssert.AreEquivalent(unorderedTraits, orderedTraits);
 
@@ -80,7 +80,7 @@ namespace OpenRA.Test
 		public void TraitOrderingReportsMissingDependencies()
 		{
 			var actorInfo = new ActorInfo("test", new MockBInfo(), new MockCInfo());
-			var ex = Assert.Throws<YamlException>(() => actorInfo.TraitsInConstructOrder());
+			var ex = Assert.Throws<YamlException>(() => actorInfo.GetAllTraitInfo());
 
 			StringAssert.Contains(nameof(MockBInfo), ex.Message, "Exception message did not report a missing dependency.");
 			StringAssert.Contains(nameof(MockCInfo), ex.Message, "Exception message did not report a missing dependency.");
@@ -93,7 +93,7 @@ namespace OpenRA.Test
 		{
 			var unorderedTraits = new TraitInfo[] { new MockHInfo(), new MockIInfo() };
 			var actorInfo = new ActorInfo("test", unorderedTraits);
-			var orderedTraits = actorInfo.TraitsInConstructOrder().ToArray();
+			var orderedTraits = actorInfo.GetAllTraitInfo().ToArray();
 
 			CollectionAssert.AreEquivalent(unorderedTraits, orderedTraits);
 		}
@@ -102,7 +102,7 @@ namespace OpenRA.Test
 		public void TraitOrderingReportsCyclicDependencies()
 		{
 			var actorInfo = new ActorInfo("test", new MockDInfo(), new MockEInfo(), new MockFInfo());
-			var ex = Assert.Throws<YamlException>(() => actorInfo.TraitsInConstructOrder());
+			var ex = Assert.Throws<YamlException>(() => actorInfo.GetAllTraitInfo());
 
 			StringAssert.Contains(nameof(MockDInfo), ex.Message, "Exception message should report all cyclic dependencies.");
 			StringAssert.Contains(nameof(MockEInfo), ex.Message, "Exception message should report all cyclic dependencies.");
@@ -113,7 +113,7 @@ namespace OpenRA.Test
 		public void TraitOrderingReportsCyclicOptionalDependencies()
 		{
 			var actorInfo = new ActorInfo("test", new MockJInfo(), new MockKInfo(), new MockLInfo());
-			var ex = Assert.Throws<YamlException>(() => actorInfo.TraitsInConstructOrder());
+			var ex = Assert.Throws<YamlException>(() => actorInfo.GetAllTraitInfo());
 
 			StringAssert.Contains(nameof(MockJInfo), ex.Message, "Exception message should report all cyclic dependencies.");
 			StringAssert.Contains(nameof(MockKInfo), ex.Message, "Exception message should report all cyclic dependencies.");

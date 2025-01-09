@@ -77,7 +77,7 @@ namespace OpenRA.Mods.Common.Lint
 				}
 
 				foreach (var requiredTrait in attribute.RequiredTraits)
-					if (!dict[v].TraitsInConstructOrder().Any(t => t.GetType() == requiredTrait || t.GetType().IsSubclassOf(requiredTrait)))
+					if (!dict[v].GetAllTraitInfo().Any(t => t.GetType() == requiredTrait || t.GetType().IsSubclassOf(requiredTrait)))
 						emitError($"Actor type `{value}` does not have trait `{requiredTrait.Name}` which is required by `{traitInfo.GetType().Name}.{fieldInfo.Name}`.");
 			}
 		}

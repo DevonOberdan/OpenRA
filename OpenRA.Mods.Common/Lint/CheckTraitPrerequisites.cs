@@ -33,7 +33,7 @@ namespace OpenRA.Mods.Common.Lint
 			{
 				try
 				{
-					var hasTraits = actorInfo.Value.TraitsInConstructOrder().Any();
+					var hasTraits = actorInfo.Value.GetAllTraitInfo().Any();
 					if (!hasTraits)
 						emitWarning($"Actor `{actorInfo.Key}` has no traits. Is this intended?");
 				}

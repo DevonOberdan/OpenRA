@@ -162,7 +162,7 @@ namespace OpenRA
 				var syncHashesList = new List<SyncHash>();
 				var crushablesList = new List<ICrushable>();
 
-				foreach (var traitInfo in Info.TraitsInConstructOrder())
+				foreach (var traitInfo in Info.GetAllTraitInfo())
 				{
 					var trait = traitInfo.Create(init);
 					AddTrait(trait);
