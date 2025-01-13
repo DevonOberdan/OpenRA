@@ -1,11 +1,12 @@
 ﻿using System.Reflection;
 using NUnit.Framework;
+using OpenRA.Mods.Common.Traits;
 using OpenRA.Primitives;
 
 namespace OpenRA.Test
 {
 	[TestFixture]
-	public class TaskOneTests
+	public class TaskTests
 	{
 		[TestCase(TestName = "Actor contains a non-public method named Initialize")]
 		public void NewInitializeMethodTest()
@@ -21,6 +22,13 @@ namespace OpenRA.Test
 													new[] { typeof(World), typeof(string), typeof(TypeDictionary) });
 
 			Assert.IsNotNull(correctConstructor, "Actor has incorrect constructor parameters");
+		}
+
+		[TestCase(TestName = "Actor `created` field is not set to `readonly`")]
+		public void ActorCreatedFieldReadonlyTest()
+		{
+			var createdField = typeof(Actor).GetField("created", BindingFlags.NonPublic | BindingFlags.Instance);
+			Assert.IsFalse(createdField.IsInitOnly, "Actor `created` field should not be set to `readonly`");
 		}
 	}
 }
