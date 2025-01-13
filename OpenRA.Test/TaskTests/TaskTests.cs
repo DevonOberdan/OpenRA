@@ -1,6 +1,5 @@
 ﻿using System.Reflection;
 using NUnit.Framework;
-using OpenRA.Mods.Common.Traits;
 using OpenRA.Primitives;
 
 namespace OpenRA.Test
@@ -8,7 +7,7 @@ namespace OpenRA.Test
 	[TestFixture]
 	public class TaskTests
 	{
-		[TestCase(TestName = "Actor contains a non-public method named Initialize")]
+		[TestCase(TestName = "Actor contains a non-public method named `Initialize`")]
 		public void NewInitializeMethodTest()
 		{
 			var hasInitialize = typeof(Actor).GetMethod("Initialize", BindingFlags.NonPublic | BindingFlags.Instance);
