@@ -118,15 +118,36 @@ namespace OpenRA
 			var unresolved = source.ToHashSet();
 			unresolved.ExceptWith(resolved);
 
-			static bool AreResolvable(Type a, Type b) => a.IsAssignableFrom(b);
+			static bool AreResolvable(Type a, Type b)
+			{
+				Console.WriteLine($"Checking if {a.FullName} is resolvable from {b.FullName}");
+
+				// If a and b are the same type, they are resolvable
+				if (a == b)
+					return true;
+
+				// If a is an interface, check if b implements that interface
+				if (a.IsInterface && b.GetInterface(a.Name) != null)
+					return true;
+
+				// If a is a class, check if b is assignable from a or inherits from a
+				if (a.IsClass && a.IsAssignableFrom(b))
+					return true;
+
+				// Additional checks for generic types if necessary
+				if (a.IsGenericType && b.IsGenericType && a.GetGenericTypeDefinition() == b.GetGenericTypeDefinition())
+					return true;
+
+				return false;
+			}
 
 			// This query detects which unresolved traits can be immediately resolved as all their direct dependencies are met.
 			var more = unresolved.Where(u =>
 				u.Dependencies.All(d => // To be resolvable, all dependencies must be satisfied according to the following conditions:
-					resolved.Exists(r => AreResolvable(d, r.Type)) && // There must exist a resolved trait that meets the dependency.
-					!unresolved.Any(u1 => AreResolvable(d, u1.Type))) && // All matching traits that meet this dependency must be resolved first.
+					resolved.Exists(r => AreResolvable(r.Type, d)) && // There must exist a resolved trait that meets the dependency.
+					!unresolved.Any(u1 => AreResolvable(u1.Type, d))) && // All matching traits that meet this dependency must be resolved first.
 				u.OptionalDependencies.All(d => // To be resolvable, all optional dependencies must be satisfied according to the following condition:
-					!unresolved.Any(u1 => AreResolvable(d, u1.Type)))); // All matching traits that meet this optional dependencies must be resolved first.
+					!unresolved.Any(u1 => AreResolvable(u1.Type, d)))); // All matching traits that meet this optional dependencies must be resolved first.
 
 			// Continue resolving traits as long as possible.
 			// Each time we resolve some traits, this means dependencies for other traits may then be possible to satisfy in the next pass.
