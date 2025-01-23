@@ -120,13 +120,12 @@ namespace OpenRA
 
 			static bool AreResolvable(Type a, Type b) => a.IsAssignableFrom(b);
 
-			// This query detects which unresolved traits can be immediately resolved as all their direct dependencies are met.
 			var more = unresolved.Where(u =>
-				u.Dependencies.All(d => // To be resolvable, all dependencies must be satisfied according to the following conditions:
-					resolved.Exists(r => AreResolvable(r.Type, d)) && // There must exist a resolved trait that meets the dependency.
-					!unresolved.Any(u1 => AreResolvable(u1.Type, d))) && // All matching traits that meet this dependency must be resolved first.
-				u.OptionalDependencies.All(d => // To be resolvable, all optional dependencies must be satisfied according to the following condition:
-					!unresolved.Any(u1 => AreResolvable(u1.Type, d)))); // All matching traits that meet this optional dependencies must be resolved first.
+				u.Dependencies.All(d =>
+					resolved.Exists(r => AreResolvable(r.Type, d)) &&
+					!unresolved.Any(u1 => AreResolvable(u1.Type, d))) &&
+				u.OptionalDependencies.All(d =>
+					!unresolved.Any(u1 => AreResolvable(u1.Type, d))));
 
 			// Continue resolving traits as long as possible.
 			// Each time we resolve some traits, this means dependencies for other traits may then be possible to satisfy in the next pass.
@@ -144,7 +143,7 @@ namespace OpenRA
 			if (unresolved.Count != 0)
 			{
 				var exceptionString = "ActorInfo(\"" + Name + "\") failed to initialize because of the following:\n";
-				var missing = unresolved.SelectMany(u => u.Dependencies.Where(d => !source.Any(s => AreResolvable(d, s.Type)))).Distinct();
+				var missing = unresolved.SelectMany(u => u.Dependencies.Where(d => !source.Any(s => AreResolvable(s.Type, d)))).Distinct();
 
 				exceptionString += "Missing:\n";
 				foreach (var m in missing)
