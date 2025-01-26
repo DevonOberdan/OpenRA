@@ -118,8 +118,6 @@ namespace OpenRA
 			var unresolved = source.ToHashSet();
 			unresolved.ExceptWith(resolved);
 
-			static bool AreResolvable(Type a, Type b) => a.IsAssignableFrom(b);
-
 			var more = unresolved.Where(u =>
 				u.Dependencies.All(d =>
 					resolved.Exists(r => AreResolvable(r.Type, d)) &&
@@ -187,6 +185,7 @@ namespace OpenRA
 		public T TraitInfo<T>() where T : ITraitInfoInterface { return traits.Get<T>(); }
 		public T TraitInfoOrDefault<T>() where T : ITraitInfoInterface { return traits.GetOrDefault<T>(); }
 		public IReadOnlyCollection<T> TraitInfos<T>() where T : ITraitInfoInterface { return traits.WithInterface<T>(); }
+		static bool AreResolvable(Type a, Type b) { return a.IsAssignableFrom(b); }
 
 		public BitSet<TargetableType> GetAllTargetTypes()
 		{
