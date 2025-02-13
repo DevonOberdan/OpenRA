@@ -20,10 +20,6 @@ namespace OpenRA
 {
 	public sealed class ObjectCreator : IDisposable
 	{
-		// .NET does not support unloading assemblies, so mod libraries will leak across mod changes.
-		// This tracks the assemblies that have been loaded since game start so that we don't load multiple copies
-		static readonly Dictionary<string, Assembly> ResolvedAssemblies = new();
-
 		readonly Cache<string, Type> typeCache;
 		readonly Cache<Type, ConstructorInfo> ctorCache;
 		readonly (Assembly Assembly, string Namespace)[] assemblies;
@@ -45,20 +41,8 @@ namespace OpenRA
 
 		static void LoadAssembly(List<Assembly> assemblyList, string resolvedPath)
 		{
-			// .NET doesn't provide any way of querying the metadata of an assembly without either:
-			//   (a) loading duplicate data into the application domain, breaking the world.
-			//   (b) crashing if the assembly has already been loaded.
-			// We can't check the internal name of the assembly, so we'll work off the data instead
-			string hash;
-			using (var stream = File.OpenRead(resolvedPath))
-				hash = CryptoUtil.SHA1Hash(stream);
-
-			if (!ResolvedAssemblies.TryGetValue(hash, out var assembly))
-			{
-				var loader = new Support.AssemblyLoader(resolvedPath);
-				assembly = loader.LoadDefaultAssembly();
-				ResolvedAssemblies.Add(hash, assembly);
-			}
+			var loader = new Support.AssemblyLoader(resolvedPath);
+			var assembly = loader.LoadDefaultAssembly();
 
 			assemblyList.Add(assembly);
 		}
