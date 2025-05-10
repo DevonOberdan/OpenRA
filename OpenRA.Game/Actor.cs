@@ -123,7 +123,7 @@ namespace OpenRA
 		readonly IEnumerable<WPos> enabledTargetableWorldPositions;
 		bool created;
 
-		internal Actor(World world, string name, TypeDictionary initDict)
+		internal Actor(World world, string name, TypeDictionary initDict, bool addToWorld = true)
 		{
 			var duplicateInit = initDict.WithInterface<ISingleInstanceInit>().GroupBy(i => i.GetType())
 				.FirstOrDefault(i => i.Count() > 1);
@@ -204,10 +204,7 @@ namespace OpenRA
 				SyncHashes = syncHashesList.ToArray();
 				crushables = crushablesList.ToArray();
 			}
-		}
 
-		internal void Initialize(bool addToWorld = true)
-		{
 			created = true;
 
 			// Make sure traits are usable for condition notifiers

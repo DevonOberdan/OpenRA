@@ -336,9 +336,7 @@ namespace OpenRA
 
 		public Actor CreateActor(bool addToWorld, string name, TypeDictionary initDict)
 		{
-			var a = new Actor(this, name, initDict);
-			a.Initialize(addToWorld);
-			return a;
+			return new Actor(this, name, initDict, addToWorld);
 		}
 
 		public void Add(Actor a)
